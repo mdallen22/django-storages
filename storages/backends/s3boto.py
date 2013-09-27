@@ -98,7 +98,8 @@ class S3BotoStorageFile(File):
     #       BufferedIO streams in the Python 2.6 io module.
     buffer_size = setting('AWS_S3_FILE_BUFFER_SIZE', 5242880)
 
-    def __init__(self, name, mode, storage, buffer_size=None):
+    def __init__(self, name, mode, storage, buffer_size=None, headers={}):
+        self._headers = headers
         self._storage = storage
         self.name = name[len(self._storage.location):].lstrip('/')
         self._mode = mode
@@ -151,6 +152,7 @@ class S3BotoStorageFile(File):
                 provider.acl_header: self._storage.default_acl
             }
             upload_headers.update(self._storage.headers)
+            upload_headers.update(self._headers)
             self._multipart = self._storage.bucket.initiate_multipart_upload(
                 self.key.name,
                 headers=upload_headers,
@@ -176,6 +178,7 @@ class S3BotoStorageFile(File):
             self._write_counter += 1
             self.file.seek(0)
             headers = self._storage.headers.copy()
+            headers.update(self._headers)
             self._multipart.upload_part_from_file(
                 self.file, self._write_counter, headers=headers)
             self.file.close()
@@ -361,7 +364,8 @@ class S3BotoStorage(Storage):
 
     def _open(self, name, mode='rb'):
         name = self._normalize_name(self._clean_name(name))
-        f = self.file_class(name, mode, self)
+        content_type = mimetypes.guess_type(name)[0] or self.key_class.DefaultContentType
+        f = self.file_class(name, mode, self, headers= {'Content-Type': content_type})
         if not f.key:
             raise IOError('File does not exist: %s' % name)
         return f
