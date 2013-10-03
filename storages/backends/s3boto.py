@@ -178,7 +178,7 @@ class S3BotoStorageFile(File):
             self._write_counter += 1
             self.file.seek(0)
             headers = self._storage.headers.copy()
-            headers.update(self._headers)
+            headers.update(self.headers)
             self._multipart.upload_part_from_file(
                 self.file, self._write_counter, headers=headers)
             self.file.close()
