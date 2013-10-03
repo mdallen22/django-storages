@@ -99,7 +99,7 @@ class S3BotoStorageFile(File):
     buffer_size = setting('AWS_S3_FILE_BUFFER_SIZE', 5242880)
 
     def __init__(self, name, mode, storage, buffer_size=None, headers={}):
-        self._headers = headers
+        self.headers = headers
         self._storage = storage
         self.name = name[len(self._storage.location):].lstrip('/')
         self._mode = mode
@@ -152,7 +152,7 @@ class S3BotoStorageFile(File):
                 provider.acl_header: self._storage.default_acl
             }
             upload_headers.update(self._storage.headers)
-            upload_headers.update(self._headers)
+            upload_headers.update(self.headers)
             self._multipart = self._storage.bucket.initiate_multipart_upload(
                 self.key.name,
                 headers=upload_headers,
